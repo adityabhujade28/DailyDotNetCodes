@@ -103,5 +103,6 @@ class Program
 
             Console.WriteLine(name);
         }
+        DaywiseCSharpPractice.Program.Tasks();
+        }
     }
-}
