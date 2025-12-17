@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-
-
 namespace BlogManagementSystem.Models
 {
-    public class Post
-    {
-        public int PostId { get; set; }
+Class Blog
+{
         public int BlogId { get; set; }
-        [Required]
         public string Title { get; set; }
         public string Content { get; set; }
         public DateTime PublishedDate { get; set; }
