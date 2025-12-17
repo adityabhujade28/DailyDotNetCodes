@@ -15,8 +15,6 @@ namespace StudentCourseEnrollmentSystem.Services
             _context = context;
         }
 
-       
-
         public void EnrollStudent(int studentId, int courseId)
         {
             EnrollStudent(studentId, courseId, null);
@@ -24,17 +22,15 @@ namespace StudentCourseEnrollmentSystem.Services
 
         public void EnrollStudent(int studentId, int courseId, decimal? grade)
         {
-            // Validate Student
+
             var studentExists = _context.Students.Any(s => s.StudentId == studentId);
             if (!studentExists)
                 throw new Exception("Student not found");
 
-            // Validate Course
             var courseExists = _context.Courses.Any(c => c.CourseId == courseId);
             if (!courseExists)
                 throw new Exception("Course not found");
 
-            // Prevent duplicate enrollment (extra safety)
             var alreadyEnrolled = _context.Enrollments
                 .Any(e => e.StudentId == studentId && e.CourseId == courseId);
 
@@ -53,10 +49,6 @@ namespace StudentCourseEnrollmentSystem.Services
             _context.Enrollments.Add(enrollment);
             _context.SaveChanges();
         }
-
-        // -----------------------------
-        // LINQ + DTO Projection
-        // -----------------------------
 
         public IEnumerable<EnrollmentDto> GetEnrollments()
         {
