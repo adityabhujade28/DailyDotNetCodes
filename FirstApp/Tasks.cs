@@ -1,6 +1,6 @@
 using System;
 
-namespace DaywiseCSharpPractice
+namespace CSharpPractice
 {
     class Program
     {
@@ -8,7 +8,7 @@ namespace DaywiseCSharpPractice
         {
             bool exit = false;
 
-            while (exit!= true)
+            while (exit != true)
             {
                 Console.WriteLine("1. Calculate Simple Interest");
                 Console.WriteLine("2. Calculator");

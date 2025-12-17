@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace BlogManagementSystem.Models
 {
-    public class Post
-    {
-
-        [Key]
-        public int PostId { get; set; }
-
-        [Required]
+public class Blog
+{
         public int BlogId { get; set; }
 
         [Required]

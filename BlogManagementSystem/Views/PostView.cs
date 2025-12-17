@@ -38,15 +38,34 @@ namespace BlogManagementSystem.Views
         public void ViewPostDetails()
         {
             Console.Write("Post Id: ");
-            int id = int.Parse(Console.ReadLine());
+            if (!int.TryParse(Console.ReadLine(), out int id))
+            {
+                Console.WriteLine("Invalid Post Id.");
+                Console.ReadKey();
+                return;
+            }
 
             var post = _postService.GetPost(id);
+
+            if (post == null)
+            {
+                Console.WriteLine("Post not found.");
+                Console.ReadKey();
+                return;
+            }
 
             Console.WriteLine(post.Title);
             Console.WriteLine(post.Content);
 
-            foreach (var c in post.Comments)
-                Console.WriteLine($"- {c.Author}: {c.CommentText}");
+            if (post.Comments != null && post.Comments.Count > 0)
+            {
+                foreach (var c in post.Comments)
+                    Console.WriteLine($"- {c.Author}: {c.CommentText}");
+            }
+            else
+            {
+                Console.WriteLine("No comments.");
+            }
 
             Console.ReadKey();
         }

@@ -10,7 +10,7 @@ class Program
         string Name = "Rahul";
         bool isPresent = true;
         char Alphabet = 'A';
-        Console.WriteLine(number + " " + price + " " + g + " " + Name + " " +  Alphabet + " " + isPresent + " ");
+        Console.WriteLine(number + " " + price + " " + g + " " + Name + " " + Alphabet + " " + isPresent + " ");
 
         int a = 5;
         int b = a;
@@ -103,6 +103,7 @@ class Program
 
             Console.WriteLine(name);
         }
-        DaywiseCSharpPractice.Program.Tasks();
-        }
+
+        CSharpPractice.Program.Tasks();
     }
+}
