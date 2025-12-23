@@ -10,16 +10,15 @@ namespace BlogManagementSystem.Models
         public int BlogId { get; set; }
 
         [Required]
-        public string BlogTitle { get; set; }
-        [Required]
-        public string Author { get; set; }
-        public DateTime CreatedDate { get; set; }
+        [StringLength(150)]
         public string BlogTitle { get; set; }
 
         [Required]
+        [StringLength(100)]
         public string Author { get; set; }
 
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
+        public List<Post> Posts { get; set; } = new List<Post>();
     }
 }

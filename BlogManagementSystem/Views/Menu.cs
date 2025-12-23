@@ -25,6 +25,7 @@
                 Console.WriteLine("5. View Post Details");
                 Console.WriteLine("6. Increase View Count");
                 Console.WriteLine("7. Delete Post");
+                Console.WriteLine("8. Delete Blog");
                 Console.WriteLine("0. Exit");
 
                 switch (Console.ReadLine())
@@ -36,6 +37,7 @@
                     case "5": _postView.ViewPostDetails(); break;
                     case "6": _postView.IncreaseView(); break;
                     case "7": _postView.DeletePost(); break;
+                    case "8": _blogView.DeleteBlog(); break;
                     case "0": return;
                 }
             }

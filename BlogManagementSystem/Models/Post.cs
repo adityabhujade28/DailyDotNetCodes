@@ -1,25 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace BlogManagementSystem.Models
+﻿namespace BlogManagementSystem.Models
 {
-public class Blog
-{
+    public class Post
+    {
+        public int PostId { get; set; }
         public int BlogId { get; set; }
-
-        [Required]
-        [StringLength(150)]
         public string Title { get; set; }
-
-        [Required]
         public string Content { get; set; }
-
-        public DateTime PublishedDate { get; set; } = DateTime.Now;
-
-        public int ViewCount { get; set; } = 0;
+        public DateTime PublishedDate { get; set; }
+        public int ViewCount { get; set; }
 
         public Blog Blog { get; set; }
-        
-        public List<Comment> Comments { get; set; }
+        public List<Comment> Comments { get; set; } = new();
     }
 }

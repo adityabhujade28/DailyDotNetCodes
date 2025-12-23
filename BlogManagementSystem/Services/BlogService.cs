@@ -24,6 +24,17 @@ namespace BlogManagementSystem.Services
             _db.SaveChanges();
         }
 
+        public void DeleteBlog(int blogId)
+        {
+            var blog = _db.Blogs.Find(blogId);
+
+                if (blog == null)
+                    return;
+                _db.Blogs.Remove(blog);
+                _db.SaveChanges();
+        }
+
+
         public List<Blog> GetBlogs()
         {
             return _db.Blogs
