@@ -9,7 +9,7 @@ var services = new ServiceCollection();
 
 services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        "Server=.;Database=StudentCourseEnrollmentDB;Trusted_Connection=True;TrustServerCertificate=True"
+        "Server=localhost;Database=StudentCourseEnrollmentDB;Trusted_Connection=True;TrustServerCertificate=True"
     ));
 
 // Services
@@ -33,3 +33,4 @@ using (var scope = serviceProvider.CreateScope())
 
 var menu = serviceProvider.GetRequiredService<MenuView>();
 menu.Start();
+ 
