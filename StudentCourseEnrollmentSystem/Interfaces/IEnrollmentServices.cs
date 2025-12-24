@@ -4,7 +4,6 @@ namespace StudentCourseEnrollmentSystem.Interfaces
 {
     public interface IEnrollmentService
     {
-        // Method overloading
         void EnrollStudent(int studentId, int courseId);
         void EnrollStudent(int studentId, int courseId, decimal? grade);
 

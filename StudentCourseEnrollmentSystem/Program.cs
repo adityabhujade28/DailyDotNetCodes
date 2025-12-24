@@ -33,3 +33,4 @@ using (var scope = serviceProvider.CreateScope())
 
 var menu = serviceProvider.GetRequiredService<MenuView>();
 menu.Start();
+ 
