@@ -9,7 +9,7 @@ var services = new ServiceCollection();
 
 services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
-        "Server=.;Database=StudentCourseEnrollmentDB;Trusted_Connection=True;TrustServerCertificate=True"
+        "Server=localhost;Database=StudentCourseEnrollmentDB;Trusted_Connection=True;TrustServerCertificate=True"
     ));
 
 // Services

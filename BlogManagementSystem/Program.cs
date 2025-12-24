@@ -8,18 +8,19 @@ class Program
     {
         using var db = new AppDbContext();
 
-   
-        var blogService = new BlogService(db);
-        var postService = new PostService(db);
-        var commentService = new CommentService(db);
+    var blogService = new BlogService(db);
+    var postService = new PostService(db);
+    var commentService = new CommentService(db);
+    var userService = new UserService(db);
+    var followerService = new FollowerService(db);
 
-      
-        var blogView = new BlogView(blogService);
-        var postView = new PostView(postService);
-        var commentView = new CommentView(commentService);
+    var blogView = new BlogView(blogService);
+    var postView = new PostView(postService, blogService);
+    var commentView = new CommentView(commentService);
+    var userView = new UserView(userService);
+    var followerView = new FollowerView(followerService);
 
-     
-        var menu = new Menu(blogView, postView, commentView);
-        menu.Run();
+    var menu = new Menu(blogView, postView, commentView, userView, followerView);
+    menu.Run();
     }
 }

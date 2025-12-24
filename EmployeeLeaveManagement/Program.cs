@@ -9,7 +9,7 @@ var services = new ServiceCollection();
 // Database
 services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
-        "Server=.;Database=EmployeeLeaveManagementDB;Trusted_Connection=True;TrustServerCertificate=True"
+        "Server=localhost;Database=EmployeeLeaveManagementDB;Trusted_Connection=True;TrustServerCertificate=True"
     )
 );
 

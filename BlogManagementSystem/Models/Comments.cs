@@ -14,14 +14,14 @@ namespace BlogManagementSystem.Models
 
         [Required]
         [StringLength(50)]
-        public string Author { get; set; }
+        public string? Author { get; set; }
 
         [Required]
         [StringLength(500)]
-        public string CommentText { get; set; }
+        public string? CommentText { get; set; }
 
         public DateTime CommentDate { get; set; } = DateTime.Now;
 
-        public Post Post { get; set; }
+        public Post? Post { get; set; }
     }
 }

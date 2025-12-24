@@ -13,12 +13,12 @@ namespace BlogManagementSystem.Services
             _db = db;
         }
 
-        public void CreateBlog(string title, string author)
+        public void CreateBlog(string title, int userId)
         {
             _db.Blogs.Add(new Blog
             {
                 BlogTitle = title,
-                Author = author,
+                UserId = userId,
                 CreatedDate = DateTime.Now
             });
             _db.SaveChanges();

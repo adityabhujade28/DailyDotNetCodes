@@ -24,7 +24,7 @@ namespace BlogManagementSystem.Services
             return _db.Posts.ToList();
         }
 
-        public Post GetPost(int id)
+        public Post? GetPost(int id)
         {
             return _db.Posts
                       .Include(p => p.Comments)
@@ -34,15 +34,21 @@ namespace BlogManagementSystem.Services
         public void IncreaseView(int id)
         {
             var post = _db.Posts.Find(id);
-            post.ViewCount++;
-            _db.SaveChanges();
+            if (post != null)
+            {
+                post.ViewCount++;
+                _db.SaveChanges();
+            }
         }
 
         public void DeletePost(int id)
         {
             var post = _db.Posts.Find(id);
-            _db.Posts.Remove(post);
-            _db.SaveChanges();
+            if (post != null)
+            {
+                _db.Posts.Remove(post);
+                _db.SaveChanges();
+            }
         }
     }
 }

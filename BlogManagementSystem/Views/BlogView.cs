@@ -10,15 +10,17 @@ namespace BlogManagementSystem.Views
             _blogService = blogService;
         }
 
-        public void CreateBlog()
+        public void CreateBlog(int userId)
         {
             Console.Write("Blog Title: ");
-            string title = Console.ReadLine();
+            string? title = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.WriteLine("Blog title cannot be empty.");
+                return;
+            }
 
-            Console.Write("Author: ");
-            string author = Console.ReadLine();
-
-            _blogService.CreateBlog(title, author);
+            _blogService.CreateBlog(title, userId);
 
             Console.WriteLine("Blog created successfully!");
             Console.ReadKey();
@@ -36,16 +38,16 @@ namespace BlogManagementSystem.Views
             Console.ReadKey();
         }
 
-        public void DeleteBlog()
+        public void DeleteBlog(int userId)
 {
     Console.Clear();
     Console.WriteLine("=== Delete Blog ===");
 
-    var blogs = _blogService.GetBlogs();
+    var blogs = _blogService.GetBlogs().Where(b => b.UserId == userId).ToList();
 
     if (blogs.Count == 0)
     {
-        Console.WriteLine("No blogs available to delete.");
+        Console.WriteLine("You have no blogs to delete.");
         Console.ReadKey();
         return;
     }
@@ -65,8 +67,15 @@ namespace BlogManagementSystem.Views
         return;
     }
 
-    _blogService.DeleteBlog(blogId);
+    var blogsList = blogs.Select(b => b.BlogId).ToList();
+    if (!blogsList.Contains(blogId))
+    {
+        Console.WriteLine($"Blog with ID {blogId} does not exist.");
+        Console.ReadKey();
+        return;
+    }
 
+    _blogService.DeleteBlog(blogId);
     Console.WriteLine("Blog deleted successfully!");
     Console.ReadKey();
 }

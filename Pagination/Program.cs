@@ -57,6 +57,7 @@ class Program
         //    Console.WriteLine($"{s.StudentId} - {s.StudentName} - {s.StudentGrade}");
         //}
 
+
         // GET ONLY STUDENT NAMES IN ORDER.
         //var StudentName = context.Students
         //    .AsNoTracking()
@@ -232,7 +233,7 @@ class Program
     {
         var students = context.Students
             .Include(s => s.Enrollments)
-                .ThenInclude(e => e.Course)
+            .ThenInclude(e => e.Course)
             .ToList();
 
         foreach (var s in students)
@@ -255,7 +256,6 @@ class Program
 
     static void LinqQueries(AppDbContext context)
     {
-        // Students with GPA > 3.6
         var topStudents = context.Students
             .Where(s => s.GPA > 3.6)
             .Select(s => new
@@ -268,7 +268,6 @@ class Program
         foreach (var s in topStudents)
             Console.WriteLine($"{s.Name} - {s.GPA}");
 
-        // Average grade per course
         var avgGrades = context.Enrollments
             .GroupBy(e => e.Course.CourseName)
             .Select(g => new
