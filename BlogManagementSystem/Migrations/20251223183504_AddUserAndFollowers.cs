@@ -85,6 +85,16 @@ namespace BlogManagementSystem.Migrations
                     table.PrimaryKey("PK_Users", x => x.UserId);
                 });
 
+            migrationBuilder.Sql(@"
+                IF NOT EXISTS(SELECT 1 FROM Users WHERE UserName='Unknown' AND Email='unknown@example.com')
+                BEGIN
+                    INSERT INTO Users (UserName, Email) VALUES ('Unknown','unknown@example.com');
+                END
+                UPDATE Blogs
+                SET UserId = (SELECT MIN(UserId) FROM Users)
+                WHERE UserId = 0 OR UserId NOT IN (SELECT UserId FROM Users);
+            ");
+
             migrationBuilder.CreateTable(
                 name: "UserFollowers",
                 columns: table => new
