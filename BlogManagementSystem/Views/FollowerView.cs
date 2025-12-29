@@ -16,15 +16,29 @@ namespace BlogManagementSystem.Views
             Console.Write("Enter UserId to follow: ");
             if (int.TryParse(Console.ReadLine(), out int followId))
             {
-                _followerService.Follow(followId, userId);
-                // Get username for display
-                using (var db = new BlogManagementSystem.Data.AppDbContext())
+                if (followId == userId)
                 {
-                    var user = db.Users.FirstOrDefault(u => u.UserId == followId);
-                    if (user != null)
-                        Console.WriteLine($"You are now following: {user.UserName} (Id: {user.UserId})");
-                    else
-                        Console.WriteLine($"You are now following User {followId}");
+                    Console.WriteLine("You cannot follow yourself.");
+                }
+                else
+                {
+                    var created = _followerService.Follow(followId, userId);
+                    // Get username for display
+                    using (var db = new BlogManagementSystem.Data.AppDbContext())
+                    {
+                        var user = db.Users.FirstOrDefault(u => u.UserId == followId);
+                        if (created)
+                        {
+                            if (user != null)
+                                Console.WriteLine($"You are now following: {user.UserName} (Id: {user.UserId})");
+                            else
+                                Console.WriteLine($"You are now following User {followId}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"You are already following User {followId}.");
+                        }
+                    }
                 }
             }
             else
@@ -36,11 +50,25 @@ namespace BlogManagementSystem.Views
 
         public void UnfollowUser(int userId)
         {
+            using (var db = new BlogManagementSystem.Data.AppDbContext())
+            {
+                var following = db.UserFollowers.Where(uf => uf.FollowerId == userId).Select(uf => uf.UserId).ToList();
+                if (following.Count == 0)
+                {
+                    Console.WriteLine("You are not following anyone.");
+                    Console.ReadKey();
+                    return;
+                }
+            }
+
             Console.Write("Enter UserId to unfollow: ");
             if (int.TryParse(Console.ReadLine(), out int followId))
             {
-                _followerService.Unfollow(followId, userId);
-                Console.WriteLine($"You have unfollowed User {followId}");
+                var removed = _followerService.Unfollow(followId, userId);
+                if (removed)
+                    Console.WriteLine($"You have unfollowed User {followId}");
+                else
+                    Console.WriteLine($"You are not following User {followId}.");
             }
             else
             {

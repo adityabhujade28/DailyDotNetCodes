@@ -34,6 +34,15 @@ namespace BlogManagementSystem.Services
                 _db.SaveChanges();
         }
 
+        public bool DeleteBlogIfOwned(int blogId, int userId)
+        {
+            var blog = _db.Blogs.Find(blogId);
+            if (blog == null) return false; // not found
+            if (blog.UserId != userId) return false; // not owned by user
+            _db.Blogs.Remove(blog);
+            _db.SaveChanges();
+            return true;
+        }
 
         public List<Blog> GetBlogs()
         {
