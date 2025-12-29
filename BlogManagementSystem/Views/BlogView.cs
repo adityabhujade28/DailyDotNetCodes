@@ -70,13 +70,27 @@ namespace BlogManagementSystem.Views
     var blogsList = blogs.Select(b => b.BlogId).ToList();
     if (!blogsList.Contains(blogId))
     {
-        Console.WriteLine($"Blog with ID {blogId} does not exist.");
+        using (var db = new BlogManagementSystem.Data.AppDbContext())
+        {
+            var other = db.Blogs.Find(blogId);
+            if (other == null)
+            {
+                Console.WriteLine($"Blog with ID {blogId} does not exist.");
+            }
+            else
+            {
+                Console.WriteLine($"You cannot delete Blog {blogId} because it belongs to another user (UserId: {other.UserId}).");
+            }
+        }
         Console.ReadKey();
         return;
     }
 
-    _blogService.DeleteBlog(blogId);
-    Console.WriteLine("Blog deleted successfully!");
+    var deleted = _blogService.DeleteBlogIfOwned(blogId, userId);
+    if (deleted)
+        Console.WriteLine("Blog deleted successfully!");
+    else
+        Console.WriteLine($"Unable to delete Blog {blogId}. It may belong to another user or not exist.");
     Console.ReadKey();
 }
 
