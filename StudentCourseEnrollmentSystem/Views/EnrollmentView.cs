@@ -1,14 +1,19 @@
-﻿using StudentCourseEnrollmentSystem.Interfaces;
+﻿using Spectre.Console;
+using StudentCourseEnrollmentSystem.Interfaces;
 
 namespace StudentCourseEnrollmentSystem.Views
 {
     public class EnrollmentView
     {
         private readonly IEnrollmentService _enrollmentService;
+        private readonly IStudentService _studentService;
+        private readonly ICourseService _courseService;
 
-        public EnrollmentView(IEnrollmentService enrollmentService)
+        public EnrollmentView(IEnrollmentService enrollmentService, IStudentService studentService, ICourseService courseService)
         {
             _enrollmentService = enrollmentService;
+            _studentService = studentService;
+            _courseService = courseService;
         }
 
         public void ShowMenu()
@@ -20,6 +25,9 @@ namespace StudentCourseEnrollmentSystem.Views
                 Console.WriteLine("2. View All Enrollments");
                 Console.WriteLine("3. View Enrollments by Student");
                 Console.WriteLine("4. View Enrollments by Course");
+                Console.WriteLine("5. Drop (Unenroll) Student from Course");
+                Console.WriteLine("6. View Top Performers");
+                Console.WriteLine("7. View Course Statistics");
                 Console.WriteLine("0. Back");
 
                 Console.Write("Choose option: ");
@@ -38,6 +46,15 @@ namespace StudentCourseEnrollmentSystem.Views
                         break;
                     case "4":
                         ViewByCourse();
+                        break;
+                    case "5":
+                        DropCourse();
+                        break;
+                    case "6":
+                        ViewTopPerformers();
+                        break;
+                    case "7":
+                        ViewCourseStatistics();
                         break;
                     case "0":
                         return;
@@ -95,13 +112,18 @@ namespace StudentCourseEnrollmentSystem.Views
         {
             var enrollments = _enrollmentService.GetEnrollments();
 
-            Console.WriteLine("\n--- ALL ENROLLMENTS ---");
+            var table = new Table();
+            table.AddColumn("Student");
+            table.AddColumn("Course");
+            table.AddColumn("Grade");
+            table.AddColumn("Status");
+
             foreach (var e in enrollments)
             {
-                Console.WriteLine(
-                    $"Student: {e.StudentName} | Course: {e.CourseName} | Grade: {e.Grade ?? 0} | Status: {e.Status}"
-                );
+                table.AddRow(e.StudentName, e.CourseName, (e.Grade ?? 0).ToString(), e.Status);
             }
+
+            AnsiConsole.Write(new Panel(table).Header("ALL ENROLLMENTS"));
         }
 
         private void ViewByStudent()
@@ -115,13 +137,17 @@ namespace StudentCourseEnrollmentSystem.Views
 
             var enrollments = _enrollmentService.GetEnrollmentsByStudent(studentId);
 
-            Console.WriteLine("\n--- ENROLLMENTS BY STUDENT ---");
+            var table = new Table();
+            table.AddColumn("Course");
+            table.AddColumn("Grade");
+            table.AddColumn("Status");
+
             foreach (var e in enrollments)
             {
-                Console.WriteLine(
-                    $"Course: {e.CourseName} | Grade: {e.Grade ?? 0} | Status: {e.Status}"
-                );
+                table.AddRow(e.CourseName, (e.Grade ?? 0).ToString(), e.Status);
             }
+
+            AnsiConsole.Write(new Panel(table).Header("ENROLLMENTS BY STUDENT"));
         }
 
         private void ViewByCourse()
@@ -135,13 +161,86 @@ namespace StudentCourseEnrollmentSystem.Views
 
             var enrollments = _enrollmentService.GetEnrollmentsByCourse(courseId);
 
-            Console.WriteLine("\n--- ENROLLMENTS BY COURSE ---");
+            var table = new Table();
+            table.AddColumn("Student");
+            table.AddColumn("Grade");
+            table.AddColumn("Status");
+
             foreach (var e in enrollments)
             {
-                Console.WriteLine(
-                    $"Student: {e.StudentName} | Grade: {e.Grade ?? 0} | Status: {e.Status}"
-                );
+                table.AddRow(e.StudentName, (e.Grade ?? 0).ToString(), e.Status);
             }
+
+            AnsiConsole.Write(new Panel(table).Header("ENROLLMENTS BY COURSE"));
+        }
+
+        private void DropCourse()
+        {
+            Console.Write("Enter Student ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int studentId))
+            {
+                Console.WriteLine("Invalid Student ID");
+                return;
+            }
+
+            Console.Write("Enter Course ID: ");
+            if (!int.TryParse(Console.ReadLine(), out int courseId))
+            {
+                Console.WriteLine("Invalid Course ID");
+                return;
+            }
+
+            try
+            {
+                _enrollmentService.UnenrollStudent(studentId, courseId);
+                Console.WriteLine("Student unenrolled (dropped) successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+
+        private void ViewTopPerformers()
+        {
+            Console.Write("How many top performers to show? ");
+            if (!int.TryParse(Console.ReadLine(), out int topN) || topN <= 0)
+            {
+                Console.WriteLine("Invalid number.");
+                return;
+            }
+
+            var performers = _studentService.GetTopPerformers(topN);
+
+            var table = new Table();
+            table.AddColumn("Student (ID)");
+            table.AddColumn("Avg Grade");
+            table.AddColumn("Courses");
+
+            foreach (var p in performers)
+            {
+                table.AddRow($"{p.StudentName} ({p.StudentId})", p.AverageGrade.ToString(), p.CourseCount.ToString());
+            }
+
+            AnsiConsole.Write(new Panel(table).Header("TOP PERFORMERS"));
+        }
+
+        private void ViewCourseStatistics()
+        {
+            var stats = _courseService.GetCourseStatistics();
+
+            var table = new Table();
+            table.AddColumn("Course (ID)");
+            table.AddColumn("Enrollments");
+            table.AddColumn("Avg Grade");
+
+            foreach (var c in stats)
+            {
+                var avg = c.AverageGrade.HasValue ? c.AverageGrade.Value.ToString() : "N/A";
+                table.AddRow($"{c.CourseName} ({c.CourseId})", c.EnrollmentCount.ToString(), avg);
+            }
+
+            AnsiConsole.Write(new Panel(table).Header("COURSE STATISTICS"));
         }
     }
 }

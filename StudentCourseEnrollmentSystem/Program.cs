@@ -3,7 +3,9 @@ using Microsoft.Extensions.DependencyInjection;
 using StudentCourseEnrollmentSystem.Data;
 using StudentCourseEnrollmentSystem.Interfaces;
 using StudentCourseEnrollmentSystem.Services;
+using Microsoft.Extensions.Logging;
 using StudentCourseEnrollmentSystem.Views;
+using StudentCourseEnrollmentSystem.Repositories;
 
 var services = new ServiceCollection();
 
@@ -11,6 +13,14 @@ services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         "Server=localhost;Database=StudentCourseEnrollmentDB;Trusted_Connection=True;TrustServerCertificate=True"
     ));
+
+// Repositories
+services.AddScoped<IStudentRepository, StudentRepository>();
+services.AddScoped<ICourseRepository, CourseRepository>();
+services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+
+// Logging
+services.AddLogging(builder => builder.AddConsole());
 
 // Services
 services.AddScoped<IStudentService, StudentService>();

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using StudentCourseEnrollmentSystem.Data;
+using Microsoft.Extensions.Logging;
 using StudentCourseEnrollmentSystem.DTOs;
 using StudentCourseEnrollmentSystem.Interfaces;
 using StudentCourseEnrollmentSystem.Models;
@@ -8,11 +8,21 @@ namespace StudentCourseEnrollmentSystem.Services
 {
     public class EnrollmentService : IEnrollmentService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IEnrollmentRepository _enrollmentRepository;
+        private readonly ICourseRepository _courseRepository;
+        private readonly IStudentRepository _studentRepository;
+        private readonly ILogger<EnrollmentService> _logger;
 
-        public EnrollmentService(ApplicationDbContext context)
+        public EnrollmentService(
+            IEnrollmentRepository enrollmentRepository,
+            ICourseRepository courseRepository,
+            IStudentRepository studentRepository,
+            ILogger<EnrollmentService> logger)
         {
-            _context = context;
+            _enrollmentRepository = enrollmentRepository;
+            _courseRepository = courseRepository;
+            _studentRepository = studentRepository;
+            _logger = logger;
         }
 
         public void EnrollStudent(int studentId, int courseId)
@@ -23,12 +33,16 @@ namespace StudentCourseEnrollmentSystem.Services
         public void EnrollStudent(int studentId, int courseId, decimal? grade)
         {
             // Validate Course
-            var courseExists = _context.Courses.Any(c => c.CourseId == courseId);
-            if (!courseExists)
+            var course = _courseRepository.GetById(courseId);
+            if (course == null)
                 throw new Exception("Course not found");
 
-            var alreadyEnrolled = _context.Enrollments
-                .Any(e => e.StudentId == studentId && e.CourseId == courseId);
+            // Validate Student
+            var student = _studentRepository.GetById(studentId);
+            if (student == null)
+                throw new Exception("Student not found");
+
+            var alreadyEnrolled = _enrollmentRepository.GetByStudentAndCourse(studentId, courseId) != null;
 
             if (alreadyEnrolled)
                 throw new Exception("Student already enrolled in this course");
@@ -39,27 +53,25 @@ namespace StudentCourseEnrollmentSystem.Services
                 CourseId = courseId,
                 Grade = grade,
                 EnrolledOn = DateTime.Now,
-                Status = "Active"
+                Status = EnrollmentStatus.Active
             };
 
-            _context.Enrollments.Add(enrollment);
-            _context.SaveChanges();
+            _enrollmentRepository.Add(enrollment);
+            _logger.LogInformation("Student {studentId} enrolled in course {courseId}", studentId, courseId);
         }
 
         public IEnumerable<EnrollmentDto> GetEnrollments()
         {
-            return _context.Enrollments
-                .Include(e => e.Student)
-                .Include(e => e.Course)
+            return _enrollmentRepository.GetAll()
                 .Select(e => new EnrollmentDto
                 {
                     StudentId = e.StudentId,
-                    StudentName = e.Student.StudentName,
+                    StudentName = e.Student?.StudentName ?? string.Empty,
                     CourseId = e.CourseId,
-                    CourseName = e.Course.CourseName,
+                    CourseName = e.Course?.CourseName ?? string.Empty,
                     Grade = e.Grade,
                     EnrolledOn = e.EnrolledOn,
-                    Status = e.Status
+                    Status = e.Status.ToString()
                 })
                 .OrderBy(e => e.StudentName)
                 .ToList();
@@ -67,36 +79,44 @@ namespace StudentCourseEnrollmentSystem.Services
 
         public IEnumerable<EnrollmentDto> GetEnrollmentsByStudent(int studentId)
         {
-            return _context.Enrollments
-                .Where(e => e.StudentId == studentId)
-                .Include(e => e.Course)
+            return _enrollmentRepository.GetByStudent(studentId)
                 .Select(e => new EnrollmentDto
                 {
                     StudentId = e.StudentId,
                     CourseId = e.CourseId,
-                    CourseName = e.Course.CourseName,
+                    CourseName = e.Course?.CourseName ?? string.Empty,
                     Grade = e.Grade,
                     EnrolledOn = e.EnrolledOn,
-                    Status = e.Status
+                    Status = e.Status.ToString()
                 })
                 .ToList();
         }
 
         public IEnumerable<EnrollmentDto> GetEnrollmentsByCourse(int courseId)
         {
-            return _context.Enrollments
-                .Where(e => e.CourseId == courseId)
-                .Include(e => e.Student)
+            return _enrollmentRepository.GetByCourse(courseId)
                 .Select(e => new EnrollmentDto
                 {
                     StudentId = e.StudentId,
-                    StudentName = e.Student.StudentName,
+                    StudentName = e.Student?.StudentName ?? string.Empty,
                     CourseId = e.CourseId,
                     Grade = e.Grade,
                     EnrolledOn = e.EnrolledOn,
-                    Status = e.Status
+                    Status = e.Status.ToString()
                 })
                 .ToList();
+        }
+
+        public void UnenrollStudent(int studentId, int courseId)
+        {
+            var enrollment = _enrollmentRepository.GetByStudentAndCourse(studentId, courseId);
+            if (enrollment == null)
+                throw new Exception("Enrollment not found");
+
+            // Soft-drop by updating status
+            enrollment.Status = EnrollmentStatus.Dropped;
+            _enrollmentRepository.Update(enrollment);
+            _logger.LogInformation("Student {studentId} unenrolled from course {courseId}", studentId, courseId);
         }
     }
 }

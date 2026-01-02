@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace StudentCourseEnrollmentSystem.Models
 {
@@ -12,8 +13,8 @@ namespace StudentCourseEnrollmentSystem.Models
         public int CourseId { get; set; }
 
         // Navigation Properties
-        public Student Student { get; set; }
-        public Course Course { get; set; }
+        public Student? Student { get; set; }
+        public Course? Course { get; set; }
 
         // Payload data
         public DateTime EnrolledOn { get; set; } = DateTime.Now;
@@ -22,6 +23,13 @@ namespace StudentCourseEnrollmentSystem.Models
         public decimal? Grade { get; set; }
 
         [Required]
-        public string Status { get; set; } = "Active";
+        public EnrollmentStatus Status { get; set; } = EnrollmentStatus.Active;
+
+        // Audit & soft-delete
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedOn { get; set; }
+        public DateTime? UpdatedDate { get; set; }
+        [MaxLength(100)]
+        public string? UpdatedBy { get; set; }
     }
-}
+} 

@@ -34,10 +34,26 @@ namespace StudentCourseEnrollmentSystem.Data
                 .HasIndex(e => new { e.StudentId, e.CourseId })
                 .IsUnique();
 
+            // Store EnrollmentStatus enum as string (e.g., "Active", "Dropped")
             modelBuilder.Entity<Enrollment>()
                 .Property(e => e.Status)
+                .HasConversion<string>()
                 .HasMaxLength(20)
                 .IsRequired();
+
+            // Configure Grade precision to avoid truncation warnings
+            modelBuilder.Entity<Enrollment>()
+                .Property(e => e.Grade)
+                .HasPrecision(3, 2);
+
+            // Audit/soft-delete columns are model properties; configure defaults where helpful
+            modelBuilder.Entity<Student>()
+                .Property(s => s.IsDeleted)
+                .HasDefaultValue(false);
+
+            modelBuilder.Entity<Course>()
+                .Property(c => c.IsDeleted)
+                .HasDefaultValue(false); 
         }
     }
 }
