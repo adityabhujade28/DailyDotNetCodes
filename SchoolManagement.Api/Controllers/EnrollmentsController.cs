@@ -31,6 +31,35 @@ public class EnrollmentsController : ControllerBase
         }
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<EnrollmentDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([
+        FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] int? studentId = null,
+        [FromQuery] int? courseId = null,
+        [FromQuery] DateTime? fromDate = null,
+        [FromQuery] DateTime? toDate = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDir = null)
+    {
+        var parameters = new EnrollmentQueryParameters
+        {
+            Page = page,
+            PageSize = pageSize,
+            StudentId = studentId,
+            CourseId = courseId,
+            FromDate = fromDate,
+            ToDate = toDate,
+            SortBy = sortBy,
+            SortDir = sortDir
+        };
+
+        var result = await _service.GetPagedAsync(parameters);
+        var meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages };
+        return Ok(ApiResponse<PagedResult<EnrollmentDto>>.SuccessResponse(result, 200, meta));
+    }
+
     [HttpGet("student/{studentId}")]
     public async Task<IActionResult> GetByStudent(int studentId)
     {

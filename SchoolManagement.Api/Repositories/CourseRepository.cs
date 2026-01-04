@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SchoolManagement.Api.Data;
 using SchoolManagement.Api.Interfaces;
 using SchoolManagement.Api.Models;
+using SchoolManagement.Api.DTOs;
 
 namespace SchoolManagement.Api.Repositories;
 
@@ -17,11 +18,61 @@ public class CourseRepository : ICourseRepository
     public async Task<List<Course>> GetAllAsync()
         => await _context.Courses.Include(c => c.Department).ToListAsync();
 
+    public async Task<PagedResult<Course>> GetPagedAsync(CourseQueryParameters parameters)
+    {
+        var query = _context.Courses.Include(c => c.Department).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(parameters.Title))
+            query = query.Where(c => c.Title.Contains(parameters.Title));
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+            query = query.Where(c => c.Title.Contains(parameters.Search) || (c.Description != null && c.Description.Contains(parameters.Search)));
+
+        if (parameters.DepartmentId.HasValue)
+            query = query.Where(c => c.DepartmentId == parameters.DepartmentId.Value);
+
+        var total = await query.CountAsync();
+
+        // Sorting
+        if (!string.IsNullOrWhiteSpace(parameters.SortBy))
+        {
+            var sortDir = parameters.SortDir?.ToLower() == "desc" ? "desc" : "asc";
+            switch (parameters.SortBy.ToLower())
+            {
+                case "title":
+                    query = sortDir == "desc" ? query.OrderByDescending(c => c.Title) : query.OrderBy(c => c.Title);
+                    break;
+                case "credits":
+                    query = sortDir == "desc" ? query.OrderByDescending(c => c.Credits) : query.OrderBy(c => c.Credits);
+                    break;
+                default:
+                    query = query.OrderBy(c => c.Id);
+                    break;
+            }
+        }
+        else
+        {
+            query = query.OrderBy(c => c.Id);
+        }
+
+        var items = await query.Skip((parameters.Page - 1) * parameters.PageSize)
+                               .Take(parameters.PageSize)
+                               .ToListAsync();
+
+        return new PagedResult<Course>
+        {
+            Items = items,
+            Page = parameters.Page,
+            PageSize = parameters.PageSize,
+            TotalCount = total
+        };
+    }
+
     public async Task<List<Course>> GetByDepartmentAsync(int departmentId)
         => await _context.Courses.Where(c => c.DepartmentId == departmentId).Include(c => c.Department).ToListAsync();
 
     public async Task<Course?> GetByIdAsync(int id)
-        => await _context.Courses.FindAsync(id);
+        => await _context.Courses.Include(c => c.Department).FirstOrDefaultAsync(c => c.Id == id);
 
     public async Task<Course?> GetByTitleAsync(string title)
         => await _context.Courses.FirstOrDefaultAsync(c => c.Title == title);

@@ -33,6 +33,13 @@ public class EnrollmentService : IEnrollmentService
         var exists = await _repository.GetByStudentAndCourseAsync(dto.StudentId, dto.CourseId);
         if (exists != null) throw new ArgumentException("Student is already enrolled in this course");
 
+        // Prevent cross-department enrollment when both sides have departments assigned
+        if (student.DepartmentId.HasValue && course.DepartmentId.HasValue
+            && student.DepartmentId.Value != course.DepartmentId.Value)
+        {
+            throw new ArgumentException("Student cannot enroll in a course from a different department");
+        }
+
         // Validate numeric grade if present
         if (dto.NumericGrade.HasValue && (dto.NumericGrade < 0 || dto.NumericGrade > 100))
             throw new ArgumentException("NumericGrade must be between 0 and 100");
@@ -54,6 +61,18 @@ public class EnrollmentService : IEnrollmentService
         // Reload to include navigation properties
         var created = await _repository.GetByIdAsync(enrollment.Id);
         return created!.Adapt<EnrollmentDto>();
+    }
+
+    public async Task<PagedResult<EnrollmentDto>> GetPagedAsync(EnrollmentQueryParameters parameters)
+    {
+        var paged = await _repository.GetPagedAsync(parameters);
+        return new PagedResult<EnrollmentDto>
+        {
+            Items = paged.Items.Adapt<List<EnrollmentDto>>(),
+            Page = paged.Page,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount
+        };
     }
 
     public async Task<List<EnrollmentDto>> GetByStudentAsync(int studentId)

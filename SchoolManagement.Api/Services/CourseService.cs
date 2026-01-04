@@ -24,6 +24,18 @@ public class CourseService : ICourseService
         return list.Adapt<List<CourseDto>>();
     }
 
+    public async Task<PagedResult<CourseDto>> GetPagedAsync(CourseQueryParameters parameters)
+    {
+        var paged = await _repository.GetPagedAsync(parameters);
+        return new PagedResult<CourseDto>
+        {
+            Items = paged.Items.Adapt<List<CourseDto>>(),
+            Page = paged.Page,
+            PageSize = paged.PageSize,
+            TotalCount = paged.TotalCount
+        };
+    }
+
     public async Task<List<CourseDto>> GetByDepartmentAsync(int departmentId)
     {
         var list = await _repository.GetByDepartmentAsync(departmentId);
@@ -53,7 +65,9 @@ public class CourseService : ICourseService
         await _repository.SaveAsync();
 
         _logger.LogInformation("Course created (Id={Id}, Title={Title})", course.Id, course.Title);
-        return course.Adapt<CourseDto>();
+        // Reload to include related Department
+        var saved = await _repository.GetByIdAsync(course.Id);
+        return saved!.Adapt<CourseDto>();
     }
 
     public async Task<CourseDto?> UpdateAsync(int id, CourseUpdateDto dto)
@@ -73,7 +87,9 @@ public class CourseService : ICourseService
         await _repository.SaveAsync();
 
         _logger.LogInformation("Course updated (Id={Id})", course.Id);
-        return course.Adapt<CourseDto>();
+        // Reload to include related Department
+        var saved = await _repository.GetByIdAsync(course.Id);
+        return saved?.Adapt<CourseDto>();
     }
 
     public async Task<bool> DeleteAsync(int id)

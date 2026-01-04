@@ -5,6 +5,7 @@ namespace SchoolManagement.Api.Interfaces;
 public interface ICourseService
 {
     Task<List<CourseDto>> GetAllAsync();
+    Task<PagedResult<CourseDto>> GetPagedAsync(CourseQueryParameters parameters);
     Task<List<CourseDto>> GetByDepartmentAsync(int departmentId);
     Task<CourseDto?> GetByIdAsync(int id);
     Task<CourseDto> CreateAsync(CourseCreateDto dto);

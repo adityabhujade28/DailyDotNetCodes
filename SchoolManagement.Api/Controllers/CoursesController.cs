@@ -10,18 +10,51 @@ public class CoursesController : ControllerBase
 {
     private readonly ICourseService _service;
 
+    /// <summary>
+    /// Courses controller.
+    /// </summary>
+    /// <param name="service">Course service</param>
     public CoursesController(ICourseService service)
     {
         _service = service;
     }
 
+    /// <summary>
+    /// Get paginated list of courses with optional filters (title, department, search).
+    /// </summary>
+    /// <remarks>
+    /// Example: GET /api/courses?page=1&amp;pageSize=10&amp;title=math
+    /// </remarks>
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    [ProducesResponseType(typeof(PagedResult<CourseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1,
+                                            [FromQuery] int pageSize = 10,
+                                            [FromQuery] string? title = null,
+                                            [FromQuery] int? departmentId = null,
+                                            [FromQuery] string? search = null,
+                                            [FromQuery] string? sortBy = null,
+                                            [FromQuery] string? sortDir = null)
     {
-        var list = await _service.GetAllAsync();
-        return Ok(ApiResponse<List<CourseDto>>.SuccessResponse(list));
+        var parameters = new CourseQueryParameters
+        {
+            Page = page,
+            PageSize = pageSize,
+            Title = title,
+            DepartmentId = departmentId,
+            Search = search,
+            SortBy = sortBy,
+            SortDir = sortDir
+        };
+
+        var result = await _service.GetPagedAsync(parameters);
+        var meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages };
+        return Ok(ApiResponse<PagedResult<CourseDto>>.SuccessResponse(result, 200, meta));
     }
 
+    /// <summary>
+    /// Get courses that belong to a specific department.
+    /// </summary>
+    /// <param name="departmentId">Department identifier</param>
     [HttpGet("department/{departmentId}")]
     public async Task<IActionResult> GetByDepartment(int departmentId)
     {
