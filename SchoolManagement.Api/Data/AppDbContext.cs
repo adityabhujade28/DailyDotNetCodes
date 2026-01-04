@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<Student> Students { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Enrollment> Enrollments { get; set; }
+    public DbSet<Department> Departments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,9 +30,38 @@ public class AppDbContext : DbContext
             .HasForeignKey(e => e.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Department relationship
+        modelBuilder.Entity<Student>()
+            .HasOne(s => s.Department)
+            .WithMany(d => d.Students)
+            .HasForeignKey(s => s.DepartmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Numeric grade precision
+        modelBuilder.Entity<Enrollment>()
+            .Property(e => e.NumericGrade)
+            .HasPrecision(5, 2);
+
         // Add unique constraint for student-course enrollment
         modelBuilder.Entity<Enrollment>()
             .HasIndex(e => new { e.StudentId, e.CourseId })
+            .IsUnique();
+
+        // Ensure course titles are unique
+        modelBuilder.Entity<Course>()
+            .HasIndex(c => c.Title)
+            .IsUnique();
+
+        // Course -> Department relationship
+        modelBuilder.Entity<Course>()
+            .HasOne(c => c.Department)
+            .WithMany(d => d.Courses)
+            .HasForeignKey(c => c.DepartmentId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Unique title for courses
+        modelBuilder.Entity<Course>()
+            .HasIndex(c => c.Title)
             .IsUnique();
     }
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SchoolManagement.Api.Data;
 
@@ -11,9 +12,11 @@ using SchoolManagement.Api.Data;
 namespace SchoolManagement.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260103151541_AddDepartmentAndNumericGradePrecision")]
+    partial class AddDepartmentAndNumericGradePrecision
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,9 +36,6 @@ namespace SchoolManagement.Api.Migrations
                     b.Property<int>("Credits")
                         .HasColumnType("int");
 
-                    b.Property<int?>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -46,11 +46,6 @@ namespace SchoolManagement.Api.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
-
-                    b.HasIndex("Title")
-                        .IsUnique();
 
                     b.ToTable("Courses");
                 });
@@ -152,16 +147,6 @@ namespace SchoolManagement.Api.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("SchoolManagement.Api.Models.Course", b =>
-                {
-                    b.HasOne("SchoolManagement.Api.Models.Department", "Department")
-                        .WithMany("Courses")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Department");
-                });
-
             modelBuilder.Entity("SchoolManagement.Api.Models.Enrollment", b =>
                 {
                     b.HasOne("SchoolManagement.Api.Models.Course", "Course")
@@ -198,8 +183,6 @@ namespace SchoolManagement.Api.Migrations
 
             modelBuilder.Entity("SchoolManagement.Api.Models.Department", b =>
                 {
-                    b.Navigation("Courses");
-
                     b.Navigation("Students");
                 });
 

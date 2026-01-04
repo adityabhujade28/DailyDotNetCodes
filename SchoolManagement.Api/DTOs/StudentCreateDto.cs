@@ -22,4 +22,7 @@ public class StudentCreateDto
 
     [StringLength(200, ErrorMessage = "Address cannot exceed 200 characters")]
     public string? Address { get; set; }
+
+    // Optional department assignment
+    public int? DepartmentId { get; set; }
 }

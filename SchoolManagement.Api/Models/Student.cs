@@ -26,6 +26,10 @@ public class Student
 
     public DateTime? UpdatedAt { get; set; }
 
+    // Department relationship
+    public int? DepartmentId { get; set; }
+    public Department? Department { get; set; }
+
     // Navigation property
     public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 }

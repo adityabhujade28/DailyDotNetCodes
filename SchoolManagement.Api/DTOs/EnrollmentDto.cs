@@ -1,17 +1,13 @@
-namespace SchoolManagement.Api.Models;
+namespace SchoolManagement.Api.DTOs;
 
-public class Enrollment
+public class EnrollmentDto
 {
     public int Id { get; set; }
     public int StudentId { get; set; }
+    public string StudentName { get; set; } = string.Empty;
     public int CourseId { get; set; }
+    public string CourseName { get; set; } = string.Empty;
     public DateTime EnrollmentDate { get; set; }
     public string? Grade { get; set; }
-
-    // Numeric grade for calculations (nullable)
     public decimal? NumericGrade { get; set; }
-
-    // Navigation properties
-    public Student Student { get; set; } = null!;
-    public Course Course { get; set; } = null!;
 }

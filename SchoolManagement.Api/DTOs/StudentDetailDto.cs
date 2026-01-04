@@ -10,14 +10,9 @@ public class StudentDetailDto
     public string? Address { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public int? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public List<EnrollmentDto> Enrollments { get; set; } = new();
 }
 
-public class EnrollmentDto
-{
-    public int Id { get; set; }
-    public int CourseId { get; set; }
-    public string CourseName { get; set; } = string.Empty;
-    public DateTime EnrollmentDate { get; set; }
-    public string? Grade { get; set; }
-}
+
