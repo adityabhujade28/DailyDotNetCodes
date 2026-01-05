@@ -25,34 +25,28 @@ public class ReportService : IReportService
                         DepartmentName = d.Name,
                         StudentCount = sd.Count(),
                         TotalEnrollments = sd.SelectMany(st => st.Enrollments).Count(),
-                        AverageGrade = sd.SelectMany(st => st.Enrollments).Where(e => e.NumericGrade.HasValue).Select(e => e.NumericGrade!.Value).DefaultIfEmpty().Average()
+                        AverageGrade = sd.SelectMany(st => st.Enrollments)
+                                         .Where(e => e.NumericGrade.HasValue)
+                                         .Average(e => (decimal?)e.NumericGrade)
                     };
 
-        var list = await query.ToListAsync();
-        // If there were no numeric grades, Average() above returns 0 due to DefaultIfEmpty; convert 0 to null where appropriate
-        foreach (var item in list)
-        {
-            if (item.AverageGrade == 0 && !_context.Enrollments.Any(e => e.NumericGrade.HasValue && e.Student.DepartmentId == item.DepartmentId))
-                item.AverageGrade = null;
-        }
-        return list;
+        return await query.ToListAsync();
     }
 
     public async Task<List<TopCourseDto>> GetTopCoursesAsync(int take = 10)
     {
         // Top courses by enrollment count and average numeric grade (if present)
-        var q = _context.Enrollments
+        var results = await _context.Enrollments
             .GroupBy(e => e.CourseId)
             .Select(g => new
             {
                 CourseId = g.Key,
                 Count = g.Count(),
-                Avg = g.Where(e => e.NumericGrade.HasValue).Select(e => e.NumericGrade!.Value).DefaultIfEmpty().Average()
+                Avg = g.Where(e => e.NumericGrade.HasValue).Average(e => (decimal?)e.NumericGrade)
             })
             .OrderByDescending(x => x.Count)
-            .Take(take);
-
-        var results = await q.ToListAsync();
+            .Take(take)
+            .ToListAsync();
 
         var courseIds = results.Select(r => r.CourseId).ToList();
         var courses = await _context.Courses.Where(c => courseIds.Contains(c.Id)).ToListAsync();
@@ -62,7 +56,7 @@ public class ReportService : IReportService
             CourseId = c.Id,
             CourseTitle = c.Title,
             EnrollmentCount = r.Count,
-            AverageGrade = r.Avg == 0 && !_context.Enrollments.Any(e => e.CourseId == r.CourseId && e.NumericGrade.HasValue) ? null : (decimal?)Math.Round((decimal)r.Avg, 2)
+            AverageGrade = r.Avg.HasValue ? (decimal?)Math.Round(r.Avg.Value, 2) : null
         }).ToList();
 
         return list;
