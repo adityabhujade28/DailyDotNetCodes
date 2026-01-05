@@ -3,6 +3,7 @@ using SchoolManagement.Api.Data;
 using SchoolManagement.Api.Interfaces;
 using SchoolManagement.Api.Models;
 using SchoolManagement.Api.DTOs;
+using SchoolManagement.Api.Utilities;
 
 namespace SchoolManagement.Api.Repositories;
 
@@ -33,17 +34,16 @@ public class CourseRepository : ICourseRepository
 
         var total = await query.CountAsync();
 
-        // Sorting
+        // Sorting (use helpers to reduce duplication)
         if (!string.IsNullOrWhiteSpace(parameters.SortBy))
         {
-            var sortDir = parameters.SortDir?.ToLower() == "desc" ? "desc" : "asc";
             switch (parameters.SortBy.ToLower())
             {
                 case "title":
-                    query = sortDir == "desc" ? query.OrderByDescending(c => c.Title) : query.OrderBy(c => c.Title);
+                    query = query.OrderByDirection(c => c.Title, parameters.SortDir);
                     break;
                 case "credits":
-                    query = sortDir == "desc" ? query.OrderByDescending(c => c.Credits) : query.OrderBy(c => c.Credits);
+                    query = query.OrderByDirection(c => c.Credits, parameters.SortDir);
                     break;
                 default:
                     query = query.OrderBy(c => c.Id);
@@ -55,9 +55,8 @@ public class CourseRepository : ICourseRepository
             query = query.OrderBy(c => c.Id);
         }
 
-        var items = await query.Skip((parameters.Page - 1) * parameters.PageSize)
-                               .Take(parameters.PageSize)
-                               .ToListAsync();
+        // Paging (shared helper)
+        var items = await query.ApplyPaging(parameters.Page, parameters.PageSize).ToListAsync();
 
         return new PagedResult<Course>
         {

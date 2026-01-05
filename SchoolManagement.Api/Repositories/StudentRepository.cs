@@ -3,6 +3,7 @@ using SchoolManagement.Api.Models;
 using SchoolManagement.Api.Data;
 using SchoolManagement.Api.Interfaces;
 using SchoolManagement.Api.DTOs;
+using SchoolManagement.Api.Utilities;
 
 namespace SchoolManagement.Api.Repositories;
 
@@ -48,17 +49,16 @@ public class StudentRepository : IStudentRepository
         // Sorting
         if (!string.IsNullOrWhiteSpace(parameters.SortBy))
         {
-            var sortDir = parameters.SortDir?.ToLower() == "desc" ? "desc" : "asc";
             switch (parameters.SortBy.ToLower())
             {
                 case "name":
-                    query = sortDir == "desc" ? query.OrderByDescending(s => s.Name) : query.OrderBy(s => s.Name);
+                    query = query.OrderByDirection(s => s.Name, parameters.SortDir);
                     break;
                 case "email":
-                    query = sortDir == "desc" ? query.OrderByDescending(s => s.Email) : query.OrderBy(s => s.Email);
+                    query = query.OrderByDirection(s => s.Email, parameters.SortDir);
                     break;
                 case "createdat":
-                    query = sortDir == "desc" ? query.OrderByDescending(s => s.CreatedAt) : query.OrderBy(s => s.CreatedAt);
+                    query = query.OrderByDirection(s => s.CreatedAt, parameters.SortDir);
                     break;
                 default:
                     query = query.OrderBy(s => s.Id);
@@ -70,9 +70,7 @@ public class StudentRepository : IStudentRepository
             query = query.OrderBy(s => s.Id);
         }
 
-        var items = await query.Skip((parameters.Page - 1) * parameters.PageSize)
-                               .Take(parameters.PageSize)
-                               .ToListAsync();
+        var items = await query.ApplyPaging(parameters.Page, parameters.PageSize).ToListAsync();
 
         return new PagedResult<Student>
         {

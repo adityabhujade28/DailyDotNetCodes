@@ -52,6 +52,11 @@ public class AppDbContext : DbContext
             .HasIndex(c => c.Title)
             .IsUnique();
 
+        // Ensure department names are unique
+        modelBuilder.Entity<Department>()
+            .HasIndex(d => d.Name)
+            .IsUnique();
+
         // Course -> Department relationship
         modelBuilder.Entity<Course>()
             .HasOne(c => c.Department)
@@ -59,9 +64,5 @@ public class AppDbContext : DbContext
             .HasForeignKey(c => c.DepartmentId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Unique title for courses
-        modelBuilder.Entity<Course>()
-            .HasIndex(c => c.Title)
-            .IsUnique();
     }
 }

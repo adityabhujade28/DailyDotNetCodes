@@ -21,7 +21,7 @@ public class CorrelationIdMiddleware
 
         // Set in response headers (use indexer to avoid duplicate-key exceptions)
         context.Response.OnStarting(() => {
-            context.Response.Headers[HeaderName] = correlationId;
+            context.Response.Headers[HeaderName] = correlationId; 
             return Task.CompletedTask;
         });
 

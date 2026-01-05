@@ -3,6 +3,7 @@ using SchoolManagement.Api.Data;
 using SchoolManagement.Api.Interfaces;
 using SchoolManagement.Api.Models;
 using SchoolManagement.Api.DTOs;
+using SchoolManagement.Api.Utilities;
 
 namespace SchoolManagement.Api.Repositories;
 
@@ -59,14 +60,13 @@ public class EnrollmentRepository : IEnrollmentRepository
         // Sorting
         if (!string.IsNullOrWhiteSpace(parameters.SortBy))
         {
-            var sortDir = parameters.SortDir?.ToLower() == "desc" ? "desc" : "asc";
             switch (parameters.SortBy.ToLower())
             {
                 case "enrollmentdate":
-                    query = sortDir == "desc" ? query.OrderByDescending(e => e.EnrollmentDate) : query.OrderBy(e => e.EnrollmentDate);
+                    query = query.OrderByDirection(e => e.EnrollmentDate, parameters.SortDir);
                     break;
                 case "numericgrade":
-                    query = sortDir == "desc" ? query.OrderByDescending(e => e.NumericGrade) : query.OrderBy(e => e.NumericGrade);
+                    query = query.OrderByDirection(e => e.NumericGrade, parameters.SortDir);
                     break;
                 default:
                     query = query.OrderBy(e => e.Id);
@@ -78,9 +78,7 @@ public class EnrollmentRepository : IEnrollmentRepository
             query = query.OrderBy(e => e.Id);
         }
 
-        var items = await query.Skip((parameters.Page - 1) * parameters.PageSize)
-                               .Take(parameters.PageSize)
-                               .ToListAsync();
+        var items = await query.ApplyPaging(parameters.Page, parameters.PageSize).ToListAsync();
 
         return new PagedResult<Enrollment>
         {

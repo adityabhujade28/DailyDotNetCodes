@@ -2,6 +2,7 @@ using Mapster;
 using SchoolManagement.Api.DTOs;
 using SchoolManagement.Api.Interfaces;
 using SchoolManagement.Api.Models;
+using SchoolManagement.Api.Exceptions;
 
 namespace SchoolManagement.Api.Services;
 
@@ -58,7 +59,7 @@ public class CourseService : ICourseService
         // Unique title validation
         var existing = await _repository.GetByTitleAsync(dto.Title);
         if (existing != null)
-            throw new ArgumentException("Course title already exists");
+            throw new ConflictException("Course with the same title already exists.");
 
         var course = dto.Adapt<Course>();
         await _repository.AddAsync(course);

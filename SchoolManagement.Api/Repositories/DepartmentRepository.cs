@@ -20,6 +20,9 @@ public class DepartmentRepository : IDepartmentRepository
     public async Task<Department?> GetByIdAsync(int id)
         => await _context.Departments.FindAsync(id);
 
+    public async Task<Department?> GetByNameAsync(string name)
+        => await _context.Departments.FirstOrDefaultAsync(d => d.Name == name);
+
     public async Task AddAsync(Department department)
         => await _context.Departments.AddAsync(department);
 

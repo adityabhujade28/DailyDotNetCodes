@@ -8,6 +8,7 @@ public class Department
 
     [Required]
     [StringLength(100)]
+    
     public string Name { get; set; } = string.Empty;
 
     // Navigation properties
