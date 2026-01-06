@@ -35,7 +35,7 @@ public class AppDbContext : DbContext
             .HasOne(s => s.Department)
             .WithMany(d => d.Students)
             .HasForeignKey(s => s.DepartmentId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Numeric grade precision
         modelBuilder.Entity<Enrollment>()
@@ -62,7 +62,7 @@ public class AppDbContext : DbContext
             .HasOne(c => c.Department)
             .WithMany(d => d.Courses)
             .HasForeignKey(c => c.DepartmentId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
 
     }
 }

@@ -9,10 +9,14 @@ namespace SchoolManagement.Api.Controllers;
 public class EnrollmentsController : ControllerBase
 {
     private readonly IEnrollmentService _service;
+    private readonly IStudentService _studentService;
+    private readonly ICourseService _courseService;
 
-    public EnrollmentsController(IEnrollmentService service)
+    public EnrollmentsController(IEnrollmentService service, IStudentService studentService, ICourseService courseService)
     {
         _service = service;
+        _studentService = studentService;
+        _courseService = courseService;
     }
 
     [HttpPost]
@@ -55,22 +59,73 @@ public class EnrollmentsController : ControllerBase
             SortDir = sortDir
         };
 
+        // If caller filtered by student or course, ensure the parent exists so we can return a clear 404
+        if (studentId.HasValue)
+        {
+            var exists = await _studentService.ExistsAsync(studentId.Value);
+            if (!exists) return NotFound(ApiResponse.Failure("Student not found", 404));
+        }
+
+        if (courseId.HasValue)
+        {
+            var exists = await _courseService.ExistsAsync(courseId.Value);
+            if (!exists) return NotFound(ApiResponse.Failure("Course not found", 404));
+        }
+
         var result = await _service.GetPagedAsync(parameters);
-        var meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages };
+        object meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages };
+
+        // If there are no results but the parent exists, include a friendly message in metadata
+        if (result.TotalCount == 0)
+        {
+            if (studentId.HasValue)
+            {
+                meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages, Message = $"No enrollments found for student {studentId.Value}" };
+            }
+            else if (courseId.HasValue)
+            {
+                meta = new { result.Page, result.PageSize, result.TotalCount, result.TotalPages, Message = $"No enrollments found for course {courseId.Value}" };
+            }
+        }
+
         return Ok(ApiResponse<PagedResult<EnrollmentDto>>.SuccessResponse(result, 200, meta));
     }
 
     [HttpGet("student/{studentId}")]
     public async Task<IActionResult> GetByStudent(int studentId)
     {
-        var list = await _service.GetByStudentAsync(studentId);
+        // Verify the student exists to provide a clear 404 when appropriate
+        var exists = await _studentService.ExistsAsync(studentId);
+        if (!exists)
+            return NotFound(ApiResponse.Failure("Student not found", 404));
+
+        var list = await _service.GetByStudentAsync(studentId) ?? new List<EnrollmentDto>();
+
+        if (!list.Any())
+        {
+            var meta = new { Message = $"No enrollments found for student {studentId}", Count = 0 };
+            return Ok(ApiResponse<List<EnrollmentDto>>.SuccessResponse(list, 200, meta));
+        }
+
         return Ok(ApiResponse<List<EnrollmentDto>>.SuccessResponse(list));
     }
 
     [HttpGet("course/{courseId}")]
     public async Task<IActionResult> GetByCourse(int courseId)
     {
-        var list = await _service.GetByCourseAsync(courseId);
+        // Verify the course exists to provide a clear 404 when appropriate
+        var exists = await _courseService.ExistsAsync(courseId);
+        if (!exists)
+            return NotFound(ApiResponse.Failure("Course not found", 404));
+
+        var list = await _service.GetByCourseAsync(courseId) ?? new List<EnrollmentDto>();
+
+        if (!list.Any())
+        {
+            var meta = new { Message = $"No enrollments found for course {courseId}", Count = 0 };
+            return Ok(ApiResponse<List<EnrollmentDto>>.SuccessResponse(list, 200, meta));
+        }
+
         return Ok(ApiResponse<List<EnrollmentDto>>.SuccessResponse(list));
     }
 

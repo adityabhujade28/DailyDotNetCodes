@@ -62,10 +62,10 @@ public class DepartmentService : IDepartmentService
         if (dep == null) return false;
 
         if (await _repository.HasStudentsAsync(id))
-            throw new ArgumentException("Department has assigned students and cannot be deleted");
+            throw new ConflictException("Department has assigned students and cannot be deleted");
 
         if (await _repository.HasCoursesAsync(id))
-            throw new ArgumentException("Department has assigned courses and cannot be deleted");
+            throw new ConflictException("Department has assigned courses and cannot be deleted");
 
         _repository.Delete(dep);
         await _repository.SaveAsync();

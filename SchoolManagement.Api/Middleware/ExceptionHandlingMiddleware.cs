@@ -37,48 +37,59 @@ public class ExceptionHandlingMiddleware
 
             // Detect SQL Server unique constraint violations (2601, 2627)
             var inner = dbEx.InnerException;
-            if (inner is SqlException sqlEx && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+            if (inner is SqlException sqlEx)
             {
-                // Try to extract index name and duplicate value from the server message
-                var messageText = inner.Message ?? string.Empty;
-                var match = Regex.Match(messageText, @"unique index '([^']+)'[\s\S]*duplicate key value is \(([^)]+)\)", RegexOptions.IgnoreCase);
-
-                var friendlyMessage = "A resource with the same unique key already exists.";
-                object? errors = null;
-
-                if (match.Success)
+                // FK violation (delete restricted by dependent rows)
+                if (sqlEx.Number == 547)
                 {
-                    var indexName = match.Groups[1].Value;
-                    var duplicateValue = match.Groups[2].Value;
+                    _logger.LogWarning(dbEx, "Foreign key violation (delete restricted): {Message}", sqlEx.Message);
+                    await WriteErrorAsync(context, "Delete failed: dependent records exist.", StatusCodes.Status409Conflict, new { Detail = "Dependent child records prevent delete (foreign key constraint)" });
+                    return;
+                }
 
-                    // Map known index names to field names for friendly errors
-                    if (indexName.IndexOf("departments_name", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_departments_name", StringComparison.OrdinalIgnoreCase) >= 0)
+                // Detect SQL Server unique constraint violations (2601, 2627)
+                if (sqlEx.Number == 2601 || sqlEx.Number == 2627)
+                {
+                    // Try to extract index name and duplicate value from the server message
+                    var messageText = inner.Message ?? string.Empty;
+                    var match = Regex.Match(messageText, @"unique index '([^']+)'[\s\S]*duplicate key value is \(([^)]+)\)", RegexOptions.IgnoreCase);
+
+                    var friendlyMessage = "A resource with the same unique key already exists.";
+                    object? errors = null;
+
+                    if (match.Success)
                     {
-                        friendlyMessage = "Department with the same name already exists.";
-                        errors = new { Name = $"'{duplicateValue}' is already in use" };
-                    }
-                    else if (indexName.IndexOf("courses_title", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_courses_title", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        friendlyMessage = "Course with the same title already exists.";
-                        errors = new { Title = $"'{duplicateValue}' is already in use" };
+                        var indexName = match.Groups[1].Value;
+                        var duplicateValue = match.Groups[2].Value;
+
+                        // Map known index names to field names for friendly errors
+                        if (indexName.IndexOf("departments_name", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_departments_name", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            friendlyMessage = "Department with the same name already exists.";
+                            errors = new { Name = $"'{duplicateValue}' is already in use" };
+                        }
+                        else if (indexName.IndexOf("courses_title", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_courses_title", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            friendlyMessage = "Course with the same title already exists.";
+                            errors = new { Title = $"'{duplicateValue}' is already in use" };
+                        }
+                        else
+                        {
+                            errors = new { DuplicateValue = duplicateValue };
+                        }
                     }
                     else
                     {
-                        errors = new { DuplicateValue = duplicateValue };
+                        // Generic feedback when parsing fails
+                        friendlyMessage = "Duplicate key violates unique constraint.";
                     }
-                }
-                else
-                {
-                    // Generic feedback when parsing fails
-                    friendlyMessage = "Duplicate key violates unique constraint.";
-                }
 
-                await WriteErrorAsync(context, friendlyMessage, StatusCodes.Status409Conflict, errors);
+                    await WriteErrorAsync(context, friendlyMessage, StatusCodes.Status409Conflict, errors);
+                    return;
+                }
             }
-            else
-            {
-                await WriteErrorAsync(context, dbEx.InnerException?.Message ?? "Database update error", StatusCodes.Status409Conflict);
-            }
+
+            await WriteErrorAsync(context, dbEx.InnerException?.Message ?? "Database update error", StatusCodes.Status409Conflict);
         }
         catch (ValidationException valEx)
         {
