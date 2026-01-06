@@ -50,33 +50,69 @@ public class ExceptionHandlingMiddleware
                 // Detect SQL Server unique constraint violations (2601, 2627)
                 if (sqlEx.Number == 2601 || sqlEx.Number == 2627)
                 {
-                    // Try to extract index name and duplicate value from the server message
+                    // Try to extract index name and duplicate value from the server message using a forgiving approach
                     var messageText = inner.Message ?? string.Empty;
-                    var match = Regex.Match(messageText, @"unique index '([^']+)'[\s\S]*duplicate key value is \(([^)]+)\)", RegexOptions.IgnoreCase);
+
+                    // First try the detailed pattern (index name + duplicate value) used on many SQL Server messages
+                    var match = Regex.Match(messageText, @"unique (?:index|constraint) '([^']+)'[\s\S]*duplicate key value is \(([^)]+)\)", RegexOptions.IgnoreCase);
+
+                    string? indexName = null;
+                    string? duplicateValue = null;
+
+                    if (match.Success)
+                    {
+                        indexName = match.Groups[1].Value;
+                        duplicateValue = match.Groups[2].Value;
+                    }
+                    else
+                    {
+                        // Fallback: try to find a likely index name (e.g., IX_Students_Email) anywhere in the message
+                        var idxMatch = Regex.Match(messageText, @"(IX_[A-Za-z0-9_]+|ix_[A-Za-z0-9_]+|students_email|students_email_idx)", RegexOptions.IgnoreCase);
+                        if (idxMatch.Success)
+                        {
+                            indexName = idxMatch.Value;
+                        }
+
+                        // Fallback: capture the first parenthesized value as the duplicate value
+                        var dupMatch = Regex.Match(messageText, @"\(([^)]+)\)");
+                        if (dupMatch.Success)
+                        {
+                            duplicateValue = dupMatch.Groups[1].Value;
+                        }
+                    }
 
                     var friendlyMessage = "A resource with the same unique key already exists.";
                     object? errors = null;
 
-                    if (match.Success)
+                    if (!string.IsNullOrEmpty(indexName))
                     {
-                        var indexName = match.Groups[1].Value;
-                        var duplicateValue = match.Groups[2].Value;
-
                         // Map known index names to field names for friendly errors
                         if (indexName.IndexOf("departments_name", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_departments_name", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             friendlyMessage = "Department with the same name already exists.";
-                            errors = new { Name = $"'{duplicateValue}' is already in use" };
+                            errors = new { Name = $"'{duplicateValue ?? "value"}' is already in use" };
                         }
                         else if (indexName.IndexOf("courses_title", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_courses_title", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
                             friendlyMessage = "Course with the same title already exists.";
-                            errors = new { Title = $"'{duplicateValue}' is already in use" };
+                            errors = new { Title = $"'{duplicateValue ?? "value"}' is already in use" };
+                        }
+                        else if (indexName.IndexOf("students_email", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_students_email", StringComparison.OrdinalIgnoreCase) >= 0 || indexName.IndexOf("ix_students_email", StringComparison.OrdinalIgnoreCase) >= 0)
+                        {
+                            // Friendly message for duplicate student emails; include the offending email in the errors object
+                            friendlyMessage = "A student with the same email already exists.";
+                            errors = new { Email = $"'{duplicateValue ?? "the value"}' is already registered" };
                         }
                         else
                         {
-                            errors = new { DuplicateValue = duplicateValue };
+                            // Unknown index but we have an index name; include duplicate value when possible
+                            errors = new { duplicateValue = duplicateValue };
                         }
+                    }
+                    else if (!string.IsNullOrEmpty(duplicateValue))
+                    {
+                        // No index name found but we got a duplicate value; provide it back to the caller
+                        errors = new { duplicateValue = duplicateValue };
                     }
                     else
                     {

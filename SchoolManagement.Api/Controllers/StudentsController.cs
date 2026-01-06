@@ -146,11 +146,15 @@ public class StudentsController : ControllerBase
     /// Delete a student
     /// </summary>
     [HttpDelete("{id}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(StudentResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int id)
     {
-        var result = await _service.DeleteAsync(id);
-        return result ? NoContent() : NotFound(ApiResponse.Failure("Student not found", 404));
+        var deleted = await _service.DeleteAsync(id);
+        if (deleted == null) return NotFound(ApiResponse.Failure("Student not found", 404));
+
+        var response = ApiResponse<StudentResponseDto>.SuccessResponse(deleted, 200);
+        response.Message = $"{deleted.Name} has been deleted.";
+        return Ok(response);
     }
 }

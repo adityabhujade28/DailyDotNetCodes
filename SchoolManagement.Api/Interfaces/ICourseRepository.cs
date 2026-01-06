@@ -13,6 +13,7 @@ public interface ICourseRepository
     Task AddAsync(Course course);
     void Update(Course course);
     void Delete(Course course);
+    Task<bool> HasEnrollmentsAsync(int courseId);
     Task<bool> ExistsAsync(int id);
     Task SaveAsync();
 }

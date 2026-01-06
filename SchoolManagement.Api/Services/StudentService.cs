@@ -113,16 +113,18 @@ public class StudentService : IStudentService
         return saved?.Adapt<StudentResponseDto>();
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<StudentResponseDto?> DeleteAsync(int id)
     {
         var student = await _repository.GetByIdAsync(id);
-        if (student == null) return false;
+        if (student == null) return null;
+
+        var result = student.Adapt<StudentResponseDto>();
 
         _repository.Delete(student);
         await _repository.SaveAsync();
 
-        _logger.LogInformation("Student deleted (Id={Id})", id);
-        return true;
+        _logger.LogInformation("Student deleted (Id={Id}, Email={Email})", id, student.Email);
+        return result;
     }
 
     public async Task<bool> ExistsAsync(int id)

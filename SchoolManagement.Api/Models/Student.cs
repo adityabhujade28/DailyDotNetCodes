@@ -1,7 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace SchoolManagement.Api.Models;
 
+[Index(nameof(Email), IsUnique = true)]
 public class Student
 {
     public int Id { get; set; }

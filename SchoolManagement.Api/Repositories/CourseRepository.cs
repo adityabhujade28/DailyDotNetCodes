@@ -85,6 +85,9 @@ public class CourseRepository : ICourseRepository
     public void Delete(Course course)
         => _context.Courses.Remove(course);
 
+    public async Task<bool> HasEnrollmentsAsync(int courseId)
+        => await _context.Enrollments.AnyAsync(e => e.CourseId == courseId);
+
     public async Task<bool> ExistsAsync(int id)
         => await _context.Courses.AnyAsync(c => c.Id == id);
 

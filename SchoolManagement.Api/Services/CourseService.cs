@@ -97,6 +97,12 @@ public class CourseService : ICourseService
     {
         var course = await _repository.GetByIdAsync(id);
         if (course == null) return false;
+
+        // Prevent deletion when students are enrolled (service-level check)
+        var hasEnrollments = await _repository.HasEnrollmentsAsync(id);
+        if (hasEnrollments)
+            throw new ConflictException("Course cannot be deleted because students are enrolled in it.");
+
         _repository.Delete(course);
         await _repository.SaveAsync();
 

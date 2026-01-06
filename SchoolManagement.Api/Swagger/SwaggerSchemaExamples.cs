@@ -99,7 +99,7 @@ public class SwaggerSchemaExamples : ISchemaFilter
                 ["page"] = new OpenApiInteger(1),
                 ["pageSize"] = new OpenApiInteger(10),
                 ["totalCount"] = new OpenApiInteger(1),
-                ["totalPages"] = new OpenApiInteger(1)
+                ["totalPages"] = new OpenApiInteger(1),
             };
 
             schema.Example = paged;
