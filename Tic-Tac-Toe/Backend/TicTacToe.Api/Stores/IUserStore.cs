@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using TicTacToe.Api.Auth.Models;
+using TicTacToe.Api.Models;
 
-namespace TicTacToe.Api.Services
+namespace TicTacToe.Api.Stores
 {
     public interface IUserStore
     {
         Task<User?> GetByUsernameAsync(string username);
-        Task<User> CreateUserAsync(User user);
+        Task CreateAsync(User user);
         Task<User?> GetByIdAsync(Guid id);
         Task IncrementWinsAsync(Guid userId);
     }

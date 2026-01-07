@@ -1,10 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
-using TicTacToe.Api.Game.Models;
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading.Tasks;
-using TicTacToe.Api.Services;
+
 
 namespace TicTacToe.Api.Controllers
 {
@@ -12,41 +6,46 @@ namespace TicTacToe.Api.Controllers
     [Route("api/[controller]")]
     public class GameController : ControllerBase
     {
-        private static ConcurrentDictionary<Guid, Game> Games = new();
-        private readonly IUserStore _users;
-        public GameController(IUserStore users) { _users = users; }
+        private readonly IGameService _game;
+        public GameController(IGameService game) { _game = game; }
 
         [HttpPost("create")]
-        public IActionResult Create([FromBody] CreateGameRequest req)
+        public async Task<IActionResult> Create([FromBody] CreateGameRequest req)
         {
-            var g = new Game { PlayerXId = req.PlayerXId, PlayerOId = req.PlayerOId };
-            Games[g.Id] = g;
+            var g = await _game.CreateGameAsync(req.PlayerXId, req.PlayerOId);
             return Ok(new { g.Id });
         }
 
         [HttpPost("{id}/move")]
         public async Task<IActionResult> Move(Guid id, [FromBody] MakeMoveRequest req)
         {
-            if (!Games.TryGetValue(id, out var g)) return NotFound();
-            var symbol = g.PlayerXId == req.PlayerId ? PlayerSymbol.X : PlayerSymbol.O;
-            var ok = g.MakeMove(req.Row, req.Col, symbol);
-            if (!ok) return BadRequest(new { error = "invalid move" });
-            if (g.IsFinished && g.Winner != PlayerSymbol.None)
-            {
-                var winnerId = g.Winner == PlayerSymbol.X ? g.PlayerXId : g.PlayerOId;
-                await _users.IncrementWinsAsync(winnerId);
-            }
-            return Ok(new { g.IsFinished, g.Winner });
+            var res = await _game.MakeMoveAsync(id, req.PlayerId, req.Row, req.Col);
+            if (res == null) return BadRequest(new { error = "invalid move or game not found" });
+            return Ok(res);
         }
 
         [HttpGet("{id}")]
-        public IActionResult Get(Guid id)
+        public async Task<IActionResult> Get(Guid id)
         {
-            if (!Games.TryGetValue(id, out var g)) return NotFound();
-            return Ok(g);
+            var g = await _game.GetGameAsync(id);
+            if (g == null) return NotFound();
+            var jagged = AppDbContext.ToJagged(g.Board.Cells);
+            return Ok(new GameStateResponse(g.Id, jagged, g.Turn, g.IsFinished, g.Winner));
+        }
+
+        [HttpGet("user/{userId}")]
+        public async Task<IActionResult> GetByUser(Guid userId)
+        {
+            var list = await _game.GetGamesByUserAsync(userId);
+            var dto = list.Select(g => new GameStateResponse(g.Id, AppDbContext.ToJagged(g.Board.Cells), g.Turn, g.IsFinished, g.Winner));
+            return Ok(dto);
+        }
+
+        [HttpDelete("user/{userId}/unfinished")]
+        public async Task<IActionResult> DeleteUnfinished(Guid userId)
+        {
+            await _game.DeleteUnfinishedGamesAsync(userId);
+            return Ok();
         }
     }
-
-    public record CreateGameRequest(Guid PlayerXId, Guid PlayerOId);
-    public record MakeMoveRequest(Guid PlayerId, int Row, int Col);
 }

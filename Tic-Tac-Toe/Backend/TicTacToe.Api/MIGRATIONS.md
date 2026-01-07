@@ -1,32 +1,22 @@
-Migration & Run instructions
+Using SQL Server (LocalDB) for migrations & DB creation
 
-1) Install EF Core CLI (if not installed):
+1) Ensure EF CLI is available:
    dotnet tool install --global dotnet-ef
 
-2) From the Backend project folder:
+2) Add packages (already added in csproj):
+   Microsoft.EntityFrameworkCore
+   Microsoft.EntityFrameworkCore.SqlServer
+   Microsoft.EntityFrameworkCore.Design
+
+3) Create migration (run from project folder):
    cd Backend/TicTacToe.Api
-
-3) Add EF packages (if not already):
-   dotnet add package Microsoft.EntityFrameworkCore.Sqlite
-   dotnet add package Microsoft.EntityFrameworkCore.Design
-
-4) Create migration and update DB:
    dotnet ef migrations add InitialCreate -o Data/Migrations
+
+4) Create / update database:
    dotnet ef database update
 
-   Note: If you run from solution root use: 
-   dotnet ef migrations add InitialCreate -p Backend/TicTacToe.Api -s Backend/TicTacToe.Api -o Backend/TicTacToe.Api/Data/Migrations
+5) If you want a different SQL Server, replace `DefaultConnection` in `appsettings.json` with your connection string.
 
-5) Run the API:
-   dotnet run --project Backend/TicTacToe.Api
-
-6) Test endpoints:
-   POST /api/auth/register -> { username, password }
-   POST /api/auth/login -> { username, password }
-   POST /api/game/create -> { playerXId, playerOId }
-   POST /api/game/{id}/move -> { playerId, row, col }
-
-7) Frontend:
-   Open Frontend/index.html in the browser (or serve with a static server like "npx serve Frontend").
-
-Security note: Password hashing is implemented but tokens are placeholders (user id). Integrate real JWT tokens for production.
+Notes:
+- The Game board is stored as JSON in the `BoardJson` column for simplicity.
+- Replace LocalDB connection with a production SQL Server as needed.

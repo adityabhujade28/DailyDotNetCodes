@@ -1,21 +1,20 @@
-using Microsoft.EntityFrameworkCore;
-using TicTacToe.Api.Auth.Models;
 using TicTacToe.Api.Data;
-using System.Threading.Tasks;
+using TicTacToe.Api.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
+using System.Threading.Tasks;
 
-namespace TicTacToe.Api.Services
+namespace TicTacToe.Api.Stores
 {
     public class EfUserStore : IUserStore
     {
         private readonly AppDbContext _db;
         public EfUserStore(AppDbContext db) { _db = db; }
 
-        public async Task<User> CreateUserAsync(User user)
+        public async Task CreateAsync(User user)
         {
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
-            return user;
         }
 
         public Task<User?> GetByUsernameAsync(string username) =>

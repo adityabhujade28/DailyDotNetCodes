@@ -1,29 +1,34 @@
 using System.Threading.Tasks;
-using TicTacToe.Api.Auth.Models;
-using TicTacToe.Api.Services;
+using TicTacToe.Api.Models;
+using TicTacToe.Api.Services.Interfaces;
+using TicTacToe.Api.Stores;
 using System;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
-namespace TicTacToe.Api.Auth.Services
+namespace TicTacToe.Api.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IUserStore _store;
-        public AuthService(IUserStore store) { _store = store; }
+        private readonly TicTacToe.Api.Stores.IUserStore _store;
+        public AuthService(TicTacToe.Api.Stores.IUserStore store) { _store = store; }
 
-        public async Task<User> RegisterAsync(string username, string password)
+        public async Task<User?> RegisterAsync(string username, string password)
         {
-            var exists = await _store.GetByUsernameAsync(username);
-            if (exists != null) throw new InvalidOperationException("User already exists");
+            var existing = await _store.GetByUsernameAsync(username);
+            if (existing != null) return null;
             var user = new User { Username = username, PasswordHash = Hash(password) };
-            return await _store.CreateUserAsync(user);
+            await _store.CreateAsync(user);
+            return user;
         }
 
-        public Task<User?> ValidateCredentialsAsync(string username, string password)
+        public async Task<string?> LoginAsync(string username, string password)
         {
-            return _store.GetByUsernameAsync(username).ContinueWith(t => {
-                var u = t.Result; if (u==null) return (User?)null; return Verify(password,u.PasswordHash) ? u : null; });
+            var u = await _store.GetByUsernameAsync(username);
+            if (u == null) return null;
+            if (!Verify(password, u.PasswordHash)) return null;
+            // simple token: user id string (replace with JWT later)
+            return u.Id.ToString();
         }
 
         private static string Hash(string password)
@@ -42,7 +47,7 @@ namespace TicTacToe.Api.Auth.Services
         private static bool Verify(string password, string stored)
         {
             var parts = stored.Split(':');
-            if (parts.Length!=2) return false;
+            if (parts.Length != 2) return false;
             var salt = Convert.FromBase64String(parts[0]);
             var hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
                 password: password,

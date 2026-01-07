@@ -1,4 +1,4 @@
-namespace TicTacToe.Api.Game.Models
+namespace TicTacToe.Api.Enums
 {
     public enum PlayerSymbol { None = 0, X = 1, O = 2 }
 }

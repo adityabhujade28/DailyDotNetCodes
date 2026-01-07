@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-using TicTacToe.Api.Auth.Services;
-using TicTacToe.Api.Auth.Models;
-using System.Threading.Tasks;
 
 namespace TicTacToe.Api.Controllers
 {
@@ -15,24 +11,17 @@ namespace TicTacToe.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest req)
         {
-            try
-            {
-                var user = await _auth.RegisterAsync(req.Username, req.Password);
-                return CreatedAtAction(null, new { id = user.Id }, new { user.Id, user.Username });
-            }
-            catch (System.InvalidOperationException e) { return BadRequest(new { error = e.Message }); }
+            var user = await _auth.RegisterAsync(req.Username, req.Password);
+            if (user == null) return BadRequest(new { error = "User exists" });
+            return CreatedAtAction(null, new { id = user.Id }, new { user.Id, user.Username });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
         {
-            var user = await _auth.ValidateCredentialsAsync(req.Username, req.Password);
-            if (user == null) return Unauthorized();
-            // For simplicity: return user id as token placeholder
-            return Ok(new { token = user.Id });
+            var token = await _auth.LoginAsync(req.Username, req.Password);
+            if (token == null) return Unauthorized();
+            return Ok(new { token });
         }
     }
-
-    public record RegisterRequest(string Username, string Password);
-    public record LoginRequest(string Username, string Password);
 }

@@ -6,8 +6,37 @@
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <h1>Tic Tac Toe</h1>
-  <p><a href="login.html">Login</a> | <a href="register.html">Register</a></p>
+  <div class="container">
+    <h1>Tic Tac Toe</h1>
+    
+    <div id="authSection">
+      <p class="welcome-text">Welcome! Sign in to play</p>
+      <div class="auth-buttons">
+        <a href="login.html" class="btn">Login</a>
+        <a href="register.html" class="btn btn-outline">Register</a>
+      </div>
+    </div>
+
+    <div id="app" style="display:none;">
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+      
+      <div class="game-container">
+          <div id="turnIndicator" class="turn-indicator">
+            <span id="currentTurn">X's turn</span>
+          </div>
+
+          <div id="board"></div>
+
+          <div id="statusDisplay" class="status-display" style="display:none;">
+            <span id="statusText"></span>
+          </div>
+
+          <button id="newGameBtn" class="btn new-game-btn">New Game</button>
+        </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
   <script src="js/game.js"></script>
 </body>
 </html>
