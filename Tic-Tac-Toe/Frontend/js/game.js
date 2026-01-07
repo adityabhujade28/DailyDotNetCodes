@@ -152,8 +152,7 @@ async function initUI() {
   currentUserId = token;
   document.getElementById('authSection').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  
-  // Try to load existing active game or create new one
+
   try {
     const res = await fetch(`/api/game/user/${currentUserId}`);
     if (res.ok) {

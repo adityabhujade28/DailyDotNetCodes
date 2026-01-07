@@ -65,3 +65,10 @@ h1 {
 .reset-btn:hover {
     background: #0056b3;
 }
+
+.Turn{
+    font-size: 20px;
+    margin: 20px;
+    font-weight: bold;
+    font-family:'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
